@@ -223,6 +223,17 @@ class ToolsConfig(BaseModel):
     restrict_to_workspace: bool = False  # If true, restrict all tool access to workspace directory
 
 
+class SundayConfig(BaseModel):
+    """Sunday digital identity configuration."""
+    access_token: str = ""
+    refresh_token: str = ""
+    expires_at: str = ""          # ISO datetime
+    master_email: str = ""        # Owner's email (from auth response)
+    identity_uuid: str = ""
+    identity_name: str = ""
+    e2e_seed: str = ""            # Base64-encoded 32-byte NaCl seed (derived from PIN)
+
+
 class Config(BaseSettings):
     """Root configuration for nanobot."""
     agents: AgentsConfig = Field(default_factory=AgentsConfig)
@@ -230,6 +241,7 @@ class Config(BaseSettings):
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     gateway: GatewayConfig = Field(default_factory=GatewayConfig)
     tools: ToolsConfig = Field(default_factory=ToolsConfig)
+    sunday: SundayConfig = Field(default_factory=SundayConfig)
     
     @property
     def workspace_path(self) -> Path:

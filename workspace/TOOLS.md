@@ -140,6 +140,56 @@ write_file(
 )
 ```
 
+## Sunday Identity (Digital Identity Management)
+
+### sunday
+Manage your Sunday digital identity — passwords, email inbox, and identity info.
+All data is end-to-end encrypted; the tool handles crypto transparently.
+
+```
+sunday(action: str, ...) -> str
+```
+
+**Actions:**
+
+| Action | Description | Required params |
+|--------|-------------|-----------------|
+| `get_identity` | Show your identity name, UUID, and email | — |
+| `get_master` | Show your master (owner) name and email | — |
+| `list_emails` | List your Sunday email addresses | — |
+| `list_inbox` | List inbox messages (email + SMS) | — |
+| `get_email` | Read a specific email message | `message_id` |
+| `list_passwords` | List saved credentials | — |
+| `get_password` | Retrieve a specific password | `uuid` |
+| `create_password` | Save a new credential | `domain` |
+| `update_password` | Update an existing credential | `uuid` |
+| `delete_password` | Delete a credential | `uuid` |
+| `generate_password` | Generate a random password | `length` (default 16) |
+
+**Workflow: Signing up for a new service**
+1. `generate_password` — get a secure random password
+2. `create_password` with the domain, generated password, and your Sunday email as username
+3. Use your Sunday email (from `get_identity`) to sign up on the website
+4. `list_inbox` — check for verification emails
+
+**Examples:**
+```
+# Check your identity and email
+sunday(action="get_identity")
+
+# Generate a password, then save credentials
+sunday(action="generate_password", length=20)
+sunday(action="create_password", domain="github.com", username="me@sunday.app", password="...")
+
+# Read inbox for verification emails
+sunday(action="list_inbox")
+sunday(action="get_email", message_id=42)
+
+# Retrieve saved credentials
+sunday(action="list_passwords")
+sunday(action="get_password", uuid="...")
+```
+
 ---
 
 ## Adding Custom Tools

@@ -101,28 +101,24 @@ class HeartbeatService:
     
     async def _tick(self) -> None:
         """Execute a single heartbeat tick."""
+        # 1. HEARTBEAT.md tasks
         content = self._read_heartbeat_file()
-        
-        # Skip if HEARTBEAT.md is empty or doesn't exist
-        if _is_heartbeat_empty(content):
-            logger.debug("Heartbeat: no tasks (HEARTBEAT.md empty)")
-            return
-        
-        logger.info("Heartbeat: checking for tasks...")
-        
-        if self.on_heartbeat:
-            try:
-                response = await self.on_heartbeat(HEARTBEAT_PROMPT)
-                
-                # Check if agent said "nothing to do"
-                if HEARTBEAT_OK_TOKEN.replace("_", "") in response.upper().replace("_", ""):
-                    logger.info("Heartbeat: OK (no action needed)")
-                else:
-                    logger.info(f"Heartbeat: completed task")
-                    
-            except Exception as e:
-                logger.error(f"Heartbeat execution failed: {e}")
-    
+
+        if not _is_heartbeat_empty(content):
+            logger.info("Heartbeat: checking for tasks...")
+
+            if self.on_heartbeat:
+                try:
+                    response = await self.on_heartbeat(HEARTBEAT_PROMPT)
+
+                    if HEARTBEAT_OK_TOKEN.replace("_", "") in response.upper().replace("_", ""):
+                        logger.info("Heartbeat: OK (no action needed)")
+                    else:
+                        logger.info(f"Heartbeat: completed task")
+
+                except Exception as e:
+                    logger.error(f"Heartbeat execution failed: {e}")
+
     async def trigger_now(self) -> str | None:
         """Manually trigger a heartbeat."""
         if self.on_heartbeat:
