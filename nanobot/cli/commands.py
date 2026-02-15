@@ -35,6 +35,12 @@ app = typer.Typer(
 console = Console()
 EXIT_COMMANDS = {"exit", "quit", "/exit", "/quit", ":q"}
 
+
+def _get_sunday_api_url(config) -> str:
+    """Resolve Sunday API URL: env var overrides config default."""
+    return os.environ.get("SUNDAY_API_URL") or config.sunday.api_url
+
+
 # ---------------------------------------------------------------------------
 # CLI input: prompt_toolkit for editing, paste, history, and display
 # ---------------------------------------------------------------------------
@@ -196,16 +202,7 @@ def onboard():
     # ── Sunday Authentication (mandatory) ──────────────────────────────
     config = load_config()
 
-    sunday_api_url = os.environ.get("SUNDAY_API_URL")
-    if not sunday_api_url:
-        console.print("\n[yellow]Warning: SUNDAY_API_URL not set.[/yellow]")
-        console.print("  Set it to enable Sunday identity (e.g. export SUNDAY_API_URL=https://api.sunday.so)")
-        console.print("  Sunday identity is required for full SundayAgent functionality.")
-        console.print(f"\n{__logo__} nanobot is ready (without Sunday identity)!")
-        console.print("\nNext steps:")
-        console.print("  1. Set SUNDAY_API_URL environment variable")
-        console.print("  2. Re-run: [cyan]sunday-agent onboard[/cyan]")
-        return
+    sunday_api_url = _get_sunday_api_url(config)
 
     console.print("\n[bold]Setting up Sunday identity...[/bold]")
 
@@ -1055,10 +1052,8 @@ def login():
     """Re-authenticate with Sunday (device code flow)."""
     from nanobot.config.loader import load_config, save_config
 
-    sunday_api_url = os.environ.get("SUNDAY_API_URL")
-    if not sunday_api_url:
-        console.print("[red]Error: SUNDAY_API_URL environment variable is required.[/red]")
-        raise typer.Exit(1)
+    config = load_config()
+    sunday_api_url = _get_sunday_api_url(config)
 
     try:
         token_resp = asyncio.run(device_code_flow(sunday_api_url))
@@ -1066,7 +1061,6 @@ def login():
         console.print(f"[red]Authentication failed: {e}[/red]")
         raise typer.Exit(1)
 
-    config = load_config()
     config.sunday.access_token = token_resp.access
     config.sunday.refresh_token = token_resp.refresh
     config.sunday.master_email = token_resp.user.email
@@ -1128,10 +1122,7 @@ def refresh():
         console.print("[red]Error: Not logged in to Sunday.[/red]")
         raise typer.Exit(1)
 
-    sunday_api_url = os.environ.get("SUNDAY_API_URL")
-    if not sunday_api_url:
-        console.print("[red]Error: SUNDAY_API_URL environment variable is required.[/red]")
-        raise typer.Exit(1)
+    sunday_api_url = _get_sunday_api_url(config)
 
     async def _refresh():
         crypto = CryptoBox.from_seed_b64(config.sunday.e2e_seed) if config.sunday.e2e_seed else None

@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from typer.testing import CliRunner
@@ -10,13 +10,38 @@ from nanobot.cli.commands import app
 runner = CliRunner()
 
 
+def _mock_sunday_auth():
+    """Return context managers that mock the Sunday auth flow for onboard tests."""
+    mock_token_resp = MagicMock()
+    mock_token_resp.access = "mock_access"
+    mock_token_resp.refresh = "mock_refresh"
+    mock_token_resp.user.email = "test@example.com"
+
+    mock_client = MagicMock()
+    mock_client.get_encryption_meta = AsyncMock(
+        return_value=MagicMock(salt=None, verifier=None),
+    )
+    mock_client.list_identities = AsyncMock(return_value=[])
+    mock_client.close = AsyncMock()
+
+    return (
+        patch("nanobot.cli.commands.device_code_flow", new_callable=AsyncMock, return_value=mock_token_resp),
+        patch("nanobot.cli.commands.SundayClient", return_value=mock_client),
+        patch("nanobot.cli.commands.generate_identity_md", new_callable=AsyncMock),
+        patch("nanobot.cli.commands.CryptoBox"),
+    )
+
+
 @pytest.fixture
 def mock_paths():
-    """Mock config/workspace paths for test isolation."""
+    """Mock config/workspace paths and Sunday auth for test isolation."""
+    sunday_patches = _mock_sunday_auth()
+
     with patch("nanobot.config.loader.get_config_path") as mock_cp, \
          patch("nanobot.config.loader.save_config") as mock_sc, \
          patch("nanobot.config.loader.load_config") as mock_lc, \
-         patch("nanobot.utils.helpers.get_workspace_path") as mock_ws:
+         patch("nanobot.utils.helpers.get_workspace_path") as mock_ws, \
+         sunday_patches[0], sunday_patches[1], sunday_patches[2], sunday_patches[3]:
 
         base_dir = Path("./test_onboard_data")
         if base_dir.exists():
@@ -45,7 +70,7 @@ def test_onboard_fresh_install(mock_paths):
     assert result.exit_code == 0
     assert "Created config" in result.stdout
     assert "Created workspace" in result.stdout
-    assert "nanobot is ready" in result.stdout
+    assert "SundayAgent is ready" in result.stdout
     assert config_file.exists()
     assert (workspace_dir / "AGENTS.md").exists()
     assert (workspace_dir / "memory" / "MEMORY.md").exists()

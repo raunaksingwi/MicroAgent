@@ -225,6 +225,7 @@ class ToolsConfig(BaseModel):
 
 class SundayConfig(BaseModel):
     """Sunday digital identity configuration."""
+    api_url: str = "http://localhost:8000"
     access_token: str = ""
     refresh_token: str = ""
     expires_at: str = ""          # ISO datetime

@@ -25,12 +25,7 @@ def create_sunday_client(config) -> "SundayClient | None":
     if sunday is None or not sunday.access_token:
         return None
 
-    base_url = os.environ.get("SUNDAY_API_URL")
-    if not base_url:
-        raise RuntimeError(
-            "SUNDAY_API_URL environment variable is required when Sunday is configured. "
-            "Set it to the Sunday API base URL (e.g. https://api.sunday.so)."
-        )
+    base_url = os.environ.get("SUNDAY_API_URL") or sunday.api_url
 
     # Derive crypto box from stored seed
     crypto: CryptoBox | None = None

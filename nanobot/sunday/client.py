@@ -313,9 +313,9 @@ class SundayClient:
         return EmailThreadDetail.model_validate(data)
 
     async def reply_email(self, msg_id: int, content: str, subject: str) -> EmailMessage:
-        """POST /api/v1/email-messages/{msg_id}/reply — reply to an email."""
+        """POST /api/v1/email-messages/{msg_id}/reply/ — reply to an email."""
         resp = await self._request(
-            "POST", f"/api/v1/email-messages/{msg_id}/reply",
+            "POST", f"/api/v1/email-messages/{msg_id}/reply/",
             json={"content": content, "subject": subject},
         )
         resp.raise_for_status()
